@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useTheme } from '@mui/material/styles';
+import { Box, Typography } from '@mui/material';
 
 // Mock data - In a real app, this would come from props or Redux
 const data = [
@@ -33,26 +34,37 @@ const formatYAxis = (value: number) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div 
-        style={{ 
-          backgroundColor: '#fff', 
-          padding: '10px', 
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          p: 1.5,
           border: '1px solid #ccc',
-          borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          borderRadius: 1,
+          boxShadow: 1,
         }}
       >
-        <p style={{ margin: 0, fontWeight: 'bold' }}>{`${label}`}</p>
-        <p style={{ margin: '5px 0', color: payload[0].color }}>
-          {`Reach: ${formatYAxis(payload[0].value)}`}
-        </p>
-        <p style={{ margin: '5px 0', color: payload[1].color }}>
-          {`Engagement: ${payload[1].value}%`}
-        </p>
-        <p style={{ margin: '5px 0', color: payload[2].color }}>
-          {`Conversion: ${payload[2].value}%`}
-        </p>
-      </div>
+        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+          {label}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: payload[0].color, display: 'flex', justifyContent: 'space-between' }}
+        >
+          <span>Reach:</span> <strong>{formatYAxis(payload[0].value)}</strong>
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: payload[1].color, display: 'flex', justifyContent: 'space-between' }}
+        >
+          <span>Engagement:</span> <strong>{payload[1].value}%</strong>
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: payload[2].color, display: 'flex', justifyContent: 'space-between' }}
+        >
+          <span>Conversion:</span> <strong>{payload[2].value}%</strong>
+        </Typography>
+      </Box>
     );
   }
   return null;
@@ -74,38 +86,38 @@ const ChannelPerformanceChart: React.FC = () => {
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="name" />
-        <YAxis 
-          yAxisId="left" 
-          orientation="left" 
+        <YAxis
+          yAxisId="left"
+          orientation="left"
           stroke={theme.palette.primary.main}
           tickFormatter={formatYAxis}
         />
-        <YAxis 
-          yAxisId="right" 
-          orientation="right" 
-          stroke={theme.palette.secondary.main} 
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          stroke={theme.palette.secondary.main}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
-        <Bar 
-          yAxisId="left" 
-          dataKey="reach" 
-          name="Reach" 
-          fill={theme.palette.primary.main} 
+        <Bar
+          yAxisId="left"
+          dataKey="reach"
+          name="Reach"
+          fill={theme.palette.primary.main}
           radius={[4, 4, 0, 0]}
         />
-        <Bar 
-          yAxisId="right" 
-          dataKey="engagement" 
-          name="Engagement %" 
-          fill={theme.palette.secondary.main} 
+        <Bar
+          yAxisId="right"
+          dataKey="engagement"
+          name="Engagement (%)"
+          fill={theme.palette.secondary.main}
           radius={[4, 4, 0, 0]}
         />
-        <Bar 
-          yAxisId="right" 
-          dataKey="conversion" 
-          name="Conversion %" 
-          fill={theme.palette.success.main} 
+        <Bar
+          yAxisId="right"
+          dataKey="conversion"
+          name="Conversion (%)"
+          fill={theme.palette.success.main}
           radius={[4, 4, 0, 0]}
         />
       </BarChart>

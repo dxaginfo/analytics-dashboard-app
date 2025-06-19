@@ -1,12 +1,5 @@
 import React from 'react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Legend, 
-  Tooltip 
-} from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useTheme } from '@mui/material/styles';
 import { Box, Typography } from '@mui/material';
 
@@ -18,36 +11,24 @@ const data = [
   { platform: 'Traditional Media', value: 250000, percentage: 20.8 },
 ];
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ 
-  cx, cy, midAngle, innerRadius, outerRadius, percent, index 
-}: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text 
-      x={x} 
-      y={y} 
-      fill="white" 
-      textAnchor={x > cx ? 'start' : 'end'} 
-      dominantBaseline="central"
-      fontSize={12}
-      fontWeight="bold"
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
+// Format large numbers with K/M suffixes
+const formatNumber = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}K`;
+  }
+  return value;
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
-      <Box 
-        sx={{ 
-          bgcolor: 'background.paper', 
-          p: 1.5, 
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          p: 1.5,
           border: '1px solid #ccc',
           borderRadius: 1,
           boxShadow: 1,
@@ -56,11 +37,17 @@ const CustomTooltip = ({ active, payload }: any) => {
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
           {payload[0].name}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {`Audience: ${payload[0].value.toLocaleString()}`}
+        <Typography
+          variant="body2"
+          sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}
+        >
+          <span>Audience:</span> <strong>{formatNumber(payload[0].value)}</strong>
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {`Share: ${payload[0].payload.percentage}%`}
+        <Typography
+          variant="body2"
+          sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}
+        >
+          <span>Percentage:</span> <strong>{payload[0].payload.percentage}%</strong>
         </Typography>
       </Box>
     );
@@ -68,10 +55,39 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+  index,
+}: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize="12"
+      fontWeight="bold"
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 const AudienceDistributionChart: React.FC = () => {
   const theme = useTheme();
   
-  // Custom colors for the pie slices
+  // Colors based on theme palette
   const COLORS = [
     theme.palette.primary.main,
     theme.palette.secondary.main,
@@ -88,7 +104,7 @@ const AudienceDistributionChart: React.FC = () => {
           cy="50%"
           labelLine={false}
           label={renderCustomizedLabel}
-          outerRadius={100}
+          outerRadius={"70%"}
           fill="#8884d8"
           dataKey="value"
           nameKey="platform"
@@ -98,14 +114,7 @@ const AudienceDistributionChart: React.FC = () => {
           ))}
         </Pie>
         <Tooltip content={<CustomTooltip />} />
-        <Legend 
-          layout="horizontal" 
-          verticalAlign="bottom" 
-          align="center"
-          formatter={(value, entry, index) => (
-            <span style={{ color: '#333', fontSize: '0.875rem' }}>{value}</span>
-          )}
-        />
+        <Legend layout="horizontal" verticalAlign="bottom" align="center" />
       </PieChart>
     </ResponsiveContainer>
   );
