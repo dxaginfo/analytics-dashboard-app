@@ -1,6 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { fetchDashboardDataAPI } from '../../api/dashboardApi';
+import { 
+  fetchDashboardDataAPI, 
+  fetchChannelDataAPI, 
+  fetchAudienceDataAPI, 
+  fetchContentDataAPI,
+  fetchMigrationDataAPI
+} from '../../api/dashboardApi';
 
+// Define the types for our state
 interface SummaryData {
   totalAudience: number;
   audienceGrowth: number;
@@ -41,37 +48,77 @@ interface TrendData {
 }
 
 interface DashboardState {
-  isLoading: boolean;
-  error: string | null;
   summary: SummaryData | null;
   channelData: ChannelData[];
   audienceData: AudienceData[];
   contentData: ContentData[];
   trendData: TrendData[];
-  lastUpdated: string | null;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: DashboardState = {
-  isLoading: false,
-  error: null,
   summary: null,
   channelData: [],
   audienceData: [],
   contentData: [],
   trendData: [],
-  lastUpdated: null,
+  isLoading: false,
+  error: null,
 };
 
-// Async thunk for fetching dashboard data
+// Create async thunks for data fetching
 export const fetchDashboardData = createAsyncThunk(
-  'dashboard/fetchDashboardData',
+  'dashboard/fetchData',
   async (_, { rejectWithValue }) => {
     try {
-      // In a real app, this would be an API call
-      const data = await fetchDashboardDataAPI();
-      return data;
+      return await fetchDashboardDataAPI();
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch dashboard data');
+    }
+  }
+);
+
+export const fetchChannelData = createAsyncThunk(
+  'dashboard/fetchChannelData',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchChannelDataAPI();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch channel data');
+    }
+  }
+);
+
+export const fetchAudienceData = createAsyncThunk(
+  'dashboard/fetchAudienceData',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchAudienceDataAPI();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch audience data');
+    }
+  }
+);
+
+export const fetchContentData = createAsyncThunk(
+  'dashboard/fetchContentData',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchContentDataAPI();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch content data');
+    }
+  }
+);
+
+export const fetchMigrationData = createAsyncThunk(
+  'dashboard/fetchMigrationData',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchMigrationDataAPI();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch migration data');
     }
   }
 );
@@ -80,17 +127,17 @@ const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
-    refreshData: (state) => {
-      state.isLoading = true;
-    },
-    filterByDateRange: (state, action: PayloadAction<{ startDate: string; endDate: string }>) => {
-      // This would typically trigger a new API request with the date range
-      // For demo purposes, we'll just update the lastUpdated field
-      state.lastUpdated = new Date().toISOString();
+    clearDashboardData: (state) => {
+      state.summary = null;
+      state.channelData = [];
+      state.audienceData = [];
+      state.contentData = [];
+      state.trendData = [];
     },
   },
   extraReducers: (builder) => {
     builder
+      // Handle fetchDashboardData
       .addCase(fetchDashboardData.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -102,7 +149,6 @@ const dashboardSlice = createSlice({
         state.audienceData = action.payload.audienceData;
         state.contentData = action.payload.contentData;
         state.trendData = action.payload.trendData;
-        state.lastUpdated = new Date().toISOString();
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.isLoading = false;
@@ -111,6 +157,6 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { refreshData, filterByDateRange } = dashboardSlice.actions;
+export const { clearDashboardData } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

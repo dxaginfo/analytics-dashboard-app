@@ -1,111 +1,88 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  photoURL?: string;
-  role: string;
-}
+// Mock authentication API (in a real app, this would be real API calls)
+const mockLogin = (credentials: { username: string; password: string }) => {
+  return new Promise<{ token: string; user: any }>((resolve, reject) => {
+    setTimeout(() => {
+      // For demo purposes, accept any valid-looking credentials
+      if (credentials.username && credentials.password.length > 3) {
+        resolve({
+          token: 'mock-jwt-token',
+          user: { id: '1', name: 'Demo User', email: credentials.username },
+        });
+      } else {
+        reject(new Error('Invalid credentials'));
+      }
+    }, 800);
+  });
+};
 
+const mockCheckAuth = () => {
+  return new Promise<{ user: any }>((resolve) => {
+    setTimeout(() => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        resolve({
+          user: { id: '1', name: 'Demo User', email: 'user@example.com' },
+        });
+      } else {
+        resolve({ user: null });
+      }
+    }, 500);
+  });
+};
+
+// Define the authentication state type
 interface AuthState {
+  user: any | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | null;
   error: string | null;
 }
 
+// Define the initial state
 const initialState: AuthState = {
-  isAuthenticated: false,
-  isLoading: false,
   user: null,
+  token: localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token'),
+  isLoading: false,
   error: null,
 };
 
-// Simulates checking if user is already logged in (e.g., via token)
-export const checkAuth = createAsyncThunk(
-  'auth/checkAuth',
-  async (_, { rejectWithValue }) => {
-    try {
-      // Simulate API call to validate token
-      return await new Promise<User | null>((resolve) => {
-        setTimeout(() => {
-          // For demo purposes, we'll pretend the user is already logged in
-          resolve({
-            id: 'user123',
-            name: 'Demo User',
-            email: 'demo@example.com',
-            role: 'admin',
-          });
-        }, 500);
-      });
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Authentication check failed');
-    }
-  }
-);
-
+// Define async thunks
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
+  async (credentials: { username: string; password: string }, { rejectWithValue }) => {
     try {
-      // Simulate login API call
-      return await new Promise<User>((resolve, reject) => {
-        setTimeout(() => {
-          // For demo purposes, accept any credentials
-          if (credentials.email && credentials.password) {
-            resolve({
-              id: 'user123',
-              name: 'Demo User',
-              email: credentials.email,
-              role: 'admin',
-            });
-          } else {
-            reject(new Error('Invalid credentials'));
-          }
-        }, 1000);
-      });
+      const response = await mockLogin(credentials);
+      // Store the token in localStorage
+      localStorage.setItem('token', response.token);
+      return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Login failed');
     }
   }
 );
 
+export const logout = createAsyncThunk('auth/logout', async () => {
+  localStorage.removeItem('token');
+  return null;
+});
+
+export const checkAuth = createAsyncThunk('auth/check', async () => {
+  const response = await mockCheckAuth();
+  return response;
+});
+
+// Create the auth slice
 const authSlice = createSlice({
   name: 'auth',
   initialState,
-  reducers: {
-    logout: (state) => {
-      state.isAuthenticated = false;
-      state.user = null;
-    },
-    clearError: (state) => {
-      state.error = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
-      // Check Auth
-      .addCase(checkAuth.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(checkAuth.fulfilled, (state, action) => {
-        state.isLoading = false;
-        if (action.payload) {
-          state.isAuthenticated = true;
-          state.user = action.payload;
-        } else {
-          state.isAuthenticated = false;
-          state.user = null;
-        }
-      })
-      .addCase(checkAuth.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isAuthenticated = false;
-        state.error = action.payload as string;
-      })
-      // Login
+      // Login cases
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -113,15 +90,34 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = true;
-        state.user = action.payload;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Logout cases
+      .addCase(logout.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+      })
+      // Check auth cases
+      .addCase(checkAuth.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(checkAuth.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = !!action.payload.user;
       });
   },
 });
-
-export const { logout, clearError } = authSlice.actions;
 
 export default authSlice.reducer;
