@@ -1,180 +1,219 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  Divider,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  useTheme,
-} from '@mui/material';
 import { 
-  TrendingUp, 
-  TrendingDown,
-  BarChart,
-  PieChart,
-  Timeline
-} from '@mui/icons-material';
+  Box, 
+  Grid, 
+  Paper, 
+  Typography, 
+  Card, 
+  CardContent, 
+  CardHeader,
+  CircularProgress,
+  Container,
+  Stack,
+  Divider
+} from '@mui/material';
+import { RootState } from '../../store';
+import { fetchDashboardData } from './dashboardSlice';
+import { ArrowUpward as ArrowUpwardIcon, ArrowDownward as ArrowDownwardIcon } from '@mui/icons-material';
 
-import StatCard from '../../components/dashboard/StatCard';
+// Import our chart components
 import ChannelPerformanceChart from '../../components/charts/ChannelPerformanceChart';
 import AudienceDistributionChart from '../../components/charts/AudienceDistributionChart';
 import ContentPerformanceChart from '../../components/charts/ContentPerformanceChart';
 import TrendChart from '../../components/charts/TrendChart';
-import { RootState } from '../../store';
-import { fetchDashboardData } from './dashboardSlice';
 
-const Dashboard = () => {
-  const theme = useTheme();
+const Dashboard: React.FC = () => {
   const dispatch = useDispatch();
-  const { 
-    isLoading, 
-    summary, 
-    channelData, 
-    audienceData, 
-    contentData,
-    trendData 
-  } = useSelector((state: RootState) => state.dashboard);
+  const { summary, isLoading, error } = useSelector((state: RootState) => state.dashboard);
 
   useEffect(() => {
     // Fetch dashboard data when component mounts
-    dispatch(fetchDashboardData());
+    dispatch(fetchDashboardData() as any);
   }, [dispatch]);
 
-  return (
-    <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard
-        </Typography>
-        <Button variant="contained" color="primary">
-          Export Report
-        </Button>
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
       </Box>
+    );
+  }
 
-      {/* Summary Stats */}
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <Typography color="error" variant="h6">
+          Error loading dashboard data: {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+        Analytics Dashboard
+      </Typography>
+      <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ mb: 4 }}>
+        Comprehensive view of audience metrics across all channels
+      </Typography>
+
+      {/* Summary Cards */}
+      {summary && (
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Total Audience
+                </Typography>
+                <Typography variant="h4" component="div" fontWeight="bold">
+                  {summary.totalAudience.toLocaleString()}
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+                  {summary.audienceGrowth > 0 ? (
+                    <ArrowUpwardIcon fontSize="small" color="success" />
+                  ) : (
+                    <ArrowDownwardIcon fontSize="small" color="error" />
+                  )}
+                  <Typography 
+                    variant="body2" 
+                    color={summary.audienceGrowth > 0 ? "success.main" : "error.main"}
+                  >
+                    {Math.abs(summary.audienceGrowth)}% from last period
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Engagement Rate
+                </Typography>
+                <Typography variant="h4" component="div" fontWeight="bold">
+                  {summary.engagementRate}%
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+                  {summary.engagementChange > 0 ? (
+                    <ArrowUpwardIcon fontSize="small" color="success" />
+                  ) : (
+                    <ArrowDownwardIcon fontSize="small" color="error" />
+                  )}
+                  <Typography 
+                    variant="body2" 
+                    color={summary.engagementChange > 0 ? "success.main" : "error.main"}
+                  >
+                    {Math.abs(summary.engagementChange)}% from last period
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Content Consistency
+                </Typography>
+                <Typography variant="h4" component="div" fontWeight="bold">
+                  {summary.contentConsistency}%
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+                  {summary.consistencyChange > 0 ? (
+                    <ArrowUpwardIcon fontSize="small" color="success" />
+                  ) : (
+                    <ArrowDownwardIcon fontSize="small" color="error" />
+                  )}
+                  <Typography 
+                    variant="body2" 
+                    color={summary.consistencyChange > 0 ? "success.main" : "error.main"}
+                  >
+                    {Math.abs(summary.consistencyChange)}% from last period
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  ROI
+                </Typography>
+                <Typography variant="h4" component="div" fontWeight="bold">
+                  {summary.roi}%
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+                  {summary.roiChange > 0 ? (
+                    <ArrowUpwardIcon fontSize="small" color="success" />
+                  ) : (
+                    <ArrowDownwardIcon fontSize="small" color="error" />
+                  )}
+                  <Typography 
+                    variant="body2" 
+                    color={summary.roiChange > 0 ? "success.main" : "error.main"}
+                  >
+                    {Math.abs(summary.roiChange)}% from last period
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Charts Row 1 */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Audience"
-            value="1.2M"
-            change="+12.3%"
-            isPositive={true}
-            icon={<TrendingUp />}
-            color={theme.palette.success.main}
-          />
+        <Grid item xs={12} md={8}>
+          <Card sx={{ height: 400 }}>
+            <CardHeader title="Audience Trend" />
+            <Divider />
+            <CardContent sx={{ height: 'calc(100% - 76px)' }}>
+              <TrendChart />
+            </CardContent>
+          </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Engagement Rate"
-            value="4.5%"
-            change="+0.8%"
-            isPositive={true}
-            icon={<TrendingUp />}
-            color={theme.palette.success.main}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Content Consistency"
-            value="85%"
-            change="-2.1%"
-            isPositive={false}
-            icon={<TrendingDown />}
-            color={theme.palette.error.main}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="ROI"
-            value="3.2x"
-            change="+0.4x"
-            isPositive={true}
-            icon={<TrendingUp />}
-            color={theme.palette.success.main}
-          />
+        
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: 400 }}>
+            <CardHeader title="Audience Distribution" />
+            <Divider />
+            <CardContent sx={{ height: 'calc(100% - 76px)' }}>
+              <AudienceDistributionChart />
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
-      {/* Main Charts */}
+      {/* Charts Row 2 */}
       <Grid container spacing={3}>
-        {/* Channel Performance */}
         <Grid item xs={12} md={6}>
-          <Card className="dashboard-card">
-            <CardHeader 
-              title="Channel Performance" 
-              subheader="Metrics by channel" 
-              action={
-                <Button size="small">View Details</Button>
-              }
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <ChannelPerformanceChart />
-              </Box>
+          <Card sx={{ height: 400 }}>
+            <CardHeader title="Channel Performance" />
+            <Divider />
+            <CardContent sx={{ height: 'calc(100% - 76px)' }}>
+              <ChannelPerformanceChart />
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Audience Distribution */}
+        
         <Grid item xs={12} md={6}>
-          <Card className="dashboard-card">
-            <CardHeader 
-              title="Audience Distribution" 
-              subheader="By platform" 
-              action={
-                <Button size="small">View Details</Button>
-              }
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <AudienceDistributionChart />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Content Performance */}
-        <Grid item xs={12} md={6}>
-          <Card className="dashboard-card">
-            <CardHeader 
-              title="Content Performance" 
-              subheader="By content type" 
-              action={
-                <Button size="small">View Details</Button>
-              }
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <ContentPerformanceChart />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Audience Migration Trends */}
-        <Grid item xs={12} md={6}>
-          <Card className="dashboard-card">
-            <CardHeader 
-              title="Audience Migration Trends" 
-              subheader="Last 12 months" 
-              action={
-                <Button size="small">View Details</Button>
-              }
-            />
-            <CardContent>
-              <Box sx={{ height: 300 }}>
-                <TrendChart />
-              </Box>
+          <Card sx={{ height: 400 }}>
+            <CardHeader title="Content Performance" />
+            <Divider />
+            <CardContent sx={{ height: 'calc(100% - 76px)' }}>
+              <ContentPerformanceChart />
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </Container>
   );
 };
 
