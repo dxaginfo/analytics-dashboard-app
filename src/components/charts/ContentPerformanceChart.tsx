@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -8,10 +8,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine,
 } from 'recharts';
 import { useTheme } from '@mui/material/styles';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, ToggleButtonGroup, ToggleButton } from '@mui/material';
 
 // Mock data - In a real app, this would come from props or Redux
 const data = [
@@ -43,106 +42,109 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           border: '1px solid #ccc',
           borderRadius: 1,
           boxShadow: 1,
-          minWidth: 180,
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
           {label}
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: payload[0].color, display: 'flex', justifyContent: 'space-between' }}
-        >
-          <span>Engagement:</span> <strong>{payload[0].value}%</strong>
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: payload[1].color, display: 'flex', justifyContent: 'space-between' }}
-        >
-          <span>Reach:</span> <strong>{formatYAxis(payload[1].value)}</strong>
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: payload[2].color, display: 'flex', justifyContent: 'space-between' }}
-        >
-          <span>Growth:</span> <strong>{payload[2].value}%</strong>
-        </Typography>
+        {payload.map((entry: any, index: number) => (
+          <Typography
+            key={index}
+            variant="body2"
+            sx={{ 
+              color: entry.color, 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              mt: 0.25
+            }}
+          >
+            <span>{entry.name}:</span> <strong>
+              {entry.dataKey === 'reach' ? formatYAxis(entry.value) : 
+               entry.dataKey === 'engagement' ? `${entry.value}%` : 
+               `${entry.value}%`}
+            </strong>
+          </Typography>
+        ))}
       </Box>
     );
   }
   return null;
 };
 
+type MetricType = 'engagement' | 'reach' | 'growth';
+
 const ContentPerformanceChart: React.FC = () => {
   const theme = useTheme();
+  const [metric, setMetric] = useState<MetricType>('engagement');
 
-  // Average values for reference lines
-  const avgEngagement = data.reduce((sum, item) => sum + item.engagement, 0) / data.length;
-  const avgGrowth = data.reduce((sum, item) => sum + item.growth, 0) / data.length;
+  const handleMetricChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newMetric: MetricType | null,
+  ) => {
+    if (newMetric !== null) {
+      setMetric(newMetric);
+    }
+  };
+
+  const getBarColor = () => {
+    switch (metric) {
+      case 'engagement':
+        return theme.palette.primary.main;
+      case 'reach':
+        return theme.palette.secondary.main;
+      case 'growth':
+        return theme.palette.success.main;
+      default:
+        return theme.palette.primary.main;
+    }
+  };
+
+  const getYAxisFormatter = (value: number) => {
+    if (metric === 'reach') {
+      return formatYAxis(value);
+    }
+    return `${value}%`;
+  };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={data}
-        margin={{
-          top: 20,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-        <XAxis dataKey="type" />
-        <YAxis
-          yAxisId="left"
-          orientation="left"
-          stroke={theme.palette.primary.main}
-        />
-        <YAxis
-          yAxisId="right"
-          orientation="right"
-          stroke={theme.palette.secondary.main}
-          tickFormatter={formatYAxis}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend />
-        <Bar
-          yAxisId="left"
-          dataKey="engagement"
-          name="Engagement (%)"
-          fill={theme.palette.primary.main}
-          radius={[4, 4, 0, 0]}
-        />
-        <Bar
-          yAxisId="right"
-          dataKey="reach"
-          name="Reach"
-          fill={theme.palette.secondary.main}
-          radius={[4, 4, 0, 0]}
-        />
-        <Bar
-          yAxisId="left"
-          dataKey="growth"
-          name="Growth (%)"
-          fill={theme.palette.success.main}
-          radius={[4, 4, 0, 0]}
-        />
-        <ReferenceLine
-          yAxisId="left"
-          y={avgEngagement}
-          label="Avg Engagement"
-          stroke={theme.palette.primary.main}
-          strokeDasharray="3 3"
-        />
-        <ReferenceLine
-          yAxisId="left"
-          y={avgGrowth}
-          label="Avg Growth"
-          stroke={theme.palette.success.main}
-          strokeDasharray="3 3"
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <ToggleButtonGroup
+          value={metric}
+          exclusive
+          onChange={handleMetricChange}
+          size="small"
+        >
+          <ToggleButton value="engagement">Engagement</ToggleButton>
+          <ToggleButton value="reach">Reach</ToggleButton>
+          <ToggleButton value="growth">Growth</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+      
+      <ResponsiveContainer width="100%" height="85%">
+        <BarChart
+          data={data}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis dataKey="type" />
+          <YAxis tickFormatter={getYAxisFormatter} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Bar
+            dataKey={metric}
+            name={metric.charAt(0).toUpperCase() + metric.slice(1)}
+            fill={getBarColor()}
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </Box>
   );
 };
 
