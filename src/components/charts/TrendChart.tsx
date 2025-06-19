@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useTheme } from '@mui/material/styles';
-import { Box, Typography, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { Box, Typography, FormControlLabel, Switch } from '@mui/material';
 
 // Mock data - In a real app, this would come from props or Redux
 const data = [
@@ -74,52 +74,34 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-type TimeRange = '3m' | '6m' | '12m';
-
 const TrendChart: React.FC = () => {
   const theme = useTheme();
-  const [timeRange, setTimeRange] = useState<TimeRange>('12m');
+  const [showTotal, setShowTotal] = useState(false);
 
-  const handleTimeRangeChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newTimeRange: TimeRange | null,
-  ) => {
-    if (newTimeRange !== null) {
-      setTimeRange(newTimeRange);
-    }
-  };
-
-  // Filter data based on selected time range
-  const filteredData = (() => {
-    switch (timeRange) {
-      case '3m':
-        return data.slice(-3);
-      case '6m':
-        return data.slice(-6);
-      case '12m':
-      default:
-        return data;
-    }
-  })();
+  // Calculate total for each month if showing total
+  const dataWithTotal = data.map(item => ({
+    ...item,
+    total: item.website + item.socialMedia + item.streaming + item.traditionalMedia
+  }));
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <ToggleButtonGroup
-          value={timeRange}
-          exclusive
-          onChange={handleTimeRangeChange}
-          size="small"
-        >
-          <ToggleButton value="3m">3M</ToggleButton>
-          <ToggleButton value="6m">6M</ToggleButton>
-          <ToggleButton value="12m">12M</ToggleButton>
-        </ToggleButtonGroup>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showTotal}
+              onChange={() => setShowTotal(!showTotal)}
+              size="small"
+            />
+          }
+          label="Show Total"
+        />
       </Box>
       
       <ResponsiveContainer width="100%" height="85%">
         <LineChart
-          data={filteredData}
+          data={dataWithTotal}
           margin={{
             top: 5,
             right: 30,
@@ -139,7 +121,7 @@ const TrendChart: React.FC = () => {
             stroke={theme.palette.primary.main}
             strokeWidth={2}
             dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 5 }}
           />
           <Line
             type="monotone"
@@ -148,7 +130,7 @@ const TrendChart: React.FC = () => {
             stroke={theme.palette.secondary.main}
             strokeWidth={2}
             dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 5 }}
           />
           <Line
             type="monotone"
@@ -157,7 +139,7 @@ const TrendChart: React.FC = () => {
             stroke={theme.palette.success.main}
             strokeWidth={2}
             dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 5 }}
           />
           <Line
             type="monotone"
@@ -166,8 +148,19 @@ const TrendChart: React.FC = () => {
             stroke={theme.palette.warning.main}
             strokeWidth={2}
             dot={{ r: 3 }}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 5 }}
           />
+          {showTotal && (
+            <Line
+              type="monotone"
+              dataKey="total"
+              name="Total"
+              stroke={theme.palette.error.main}
+              strokeWidth={3}
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </Box>
