@@ -1,126 +1,75 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
   Button,
+  TextField,
+  Typography,
+  Paper,
+  Container,
   Alert,
   CircularProgress,
-  InputAdornment,
-  IconButton,
-  Link,
 } from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  LockOutlined as LockIcon,
-} from '@mui/icons-material';
-
 import { RootState } from '../../store';
-import { login, clearError } from './authSlice';
+import { login } from './authSlice';
 
-const Login = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { isAuthenticated, isLoading, error } = useSelector(
-    (state: RootState) => state.auth
-  );
-
-  const [email, setEmail] = useState('');
+const Login: React.FC = () => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
+  const dispatch = useDispatch();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(login({ email, password }));
-  };
-
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    dispatch(login({ username, password }) as any);
   };
 
   return (
     <Box
       sx={{
-        height: '100vh',
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f5f5f5',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
       }}
     >
-      <Card
-        sx={{
-          maxWidth: 450,
-          width: '100%',
-          boxShadow: '0 8px 40px rgba(0, 0, 0, 0.12)',
-          borderRadius: 3,
-        }}
-      >
-        <CardContent sx={{ p: 4 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              mb: 3,
-            }}
-          >
-            <Box
-              sx={{
-                width: 70,
-                height: 70,
-                borderRadius: '50%',
-                backgroundColor: 'primary.main',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              <LockIcon sx={{ fontSize: 32, color: 'white' }} />
-            </Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Analytics Dashboard
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Sign in to access your analytics
-            </Typography>
-          </Box>
+      <Container maxWidth="sm">
+        <Paper
+          elevation={6}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+            Analytics Dashboard
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4, textAlign: 'center' }}>
+            Sign in to access comprehensive analytics for your audience and content performance
+          </Typography>
 
           {error && (
-            <Alert
-              severity="error"
-              sx={{ mb: 3 }}
-              onClose={() => dispatch(clearError())}
-            >
+            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
               {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
-              id="email"
+              id="username"
               label="Email Address"
-              name="email"
+              name="username"
               autoComplete="email"
               autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
             />
             <TextField
               margin="normal"
@@ -128,63 +77,29 @@ const Login = () => {
               fullWidth
               name="password"
               label="Password"
-              type={showPassword ? 'text' : 'password'}
+              type="password"
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleTogglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3 }}
+              disabled={isLoading}
             />
-
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
+              sx={{ mt: 3, mb: 2, py: 1.5 }}
               disabled={isLoading}
-              sx={{ 
-                py: 1.5, 
-                mb: 2,
-                position: 'relative'
-              }}
             >
-              {isLoading ? (
-                <CircularProgress
-                  size={24}
-                  sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    marginTop: '-12px',
-                    marginLeft: '-12px',
-                  }}
-                />
-              ) : (
-                'Sign In'
-              )}
+              {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
-
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Box>
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+              For demo purposes, enter any email and password (min 4 characters)
+            </Typography>
           </Box>
-        </CardContent>
-      </Card>
+        </Paper>
+      </Container>
     </Box>
   );
 };
